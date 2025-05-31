@@ -21,26 +21,60 @@ def filter_doctors(df, date, start_time, end_time, specialty=None):
 
     return available[["Όνομα πόρου", "Ειδικότητα", "Ημ/νία Έναρξης", "Ημερομηνία Λήξης"]].sort_values(by=["Ειδικότητα", "Ημ/νία Έναρξης"])
 
+def get_shifts_by_specialty(df, specialty):
+    df["Ημ/νία Έναρξης"] = pd.to_datetime(df["Ημ/νία Έναρξης"])
+    df["Ημερομηνία Λήξης"] = pd.to_datetime(df["Ημερομηνία Λήξης"])
+
+    if specialty and specialty != "Όλες οι ειδικότητες":
+        df = df[df["Ειδικότητα"] == specialty]
+
+    return df[["Όνομα πόρου", "Ειδικότητα", "Ημ/νία Έναρξης", "Ημερομηνία Λήξης"]].sort_values(by=["Ημ/νία Έναρξης"])
+
+def get_doctors_now(df):
+    now = datetime.now()
+    df["Ημ/νία Έναρξης"] = pd.to_datetime(df["Ημ/νία Έναρξης"])
+    df["Ημερομηνία Λήξης"] = pd.to_datetime(df["Ημερομηνία Λήξης"])
+
+    current = df[(df["Ημ/νία Έναρξης"] <= now) & (df["Ημερομηνία Λήξης"] >= now)]
+    return current[["Όνομα πόρου", "Ειδικότητα", "Ημ/νία Έναρξης", "Ημερομηνία Λήξης"]].sort_values(by=["Ειδικότητα", "Ημ/νία Έναρξης"])
+
 if uploaded_file:
     try:
         sheet_names = pd.ExcelFile(uploaded_file).sheet_names
         df = pd.read_excel(uploaded_file, sheet_name=sheet_names[0])
 
-        col1, col2, col3 = st.columns(3)
-        with col1:
-            selected_date = st.date_input("Επίλεξε Ημερομηνία", datetime.today())
-        with col2:
-            start_hour = st.time_input("Ώρα Έναρξης Βάρδιας", value=time(7, 0))
-        with col3:
-            end_hour = st.time_input("Ώρα Λήξης Βάρδιας", value=time(15, 0))
+        tab1, tab2, tab3 = st.tabs(["Έλεγχος Βάρδιας", "Εφημερίες ανά Ειδικότητα", "Ποιοι είναι τώρα σε βάρδια"])
 
-        specialties = ["Όλες οι ειδικότητες"] + sorted(df["Ειδικότητα"].dropna().unique())
-        selected_specialty = st.selectbox("Επίλεξε Ειδικότητα", specialties)
+        with tab1:
+            col1, col2, col3 = st.columns(3)
+            with col1:
+                selected_date = st.date_input("Επίλεξε Ημερομηνία", datetime.today())
+            with col2:
+                start_hour = st.time_input("Ώρα Έναρξης Βάρδιας", value=time(7, 0))
+            with col3:
+                end_hour = st.time_input("Ώρα Λήξης Βάρδιας", value=time(15, 0))
 
-        if st.button("Εμφάνιση Διαθέσιμων Ιατρών"):
-            result = filter_doctors(df, selected_date, start_hour, end_hour, selected_specialty)
-            st.success(f"Βρέθηκαν {len(result)} διαθέσιμοι ιατροί.")
-            st.dataframe(result, use_container_width=True)
+            specialties = ["Όλες οι ειδικότητες"] + sorted(df["Ειδικότητα"].dropna().unique())
+            selected_specialty = st.selectbox("Επίλεξε Ειδικότητα", specialties, key="spec1")
+
+            if st.button("Εμφάνιση Διαθέσιμων Ιατρών"):
+                result = filter_doctors(df, selected_date, start_hour, end_hour, selected_specialty)
+                st.success(f"Βρέθηκαν {len(result)} διαθέσιμοι ιατροί.")
+                st.dataframe(result, use_container_width=True)
+
+        with tab2:
+            specialties = sorted(df["Ειδικότητα"].dropna().unique())
+            selected_specialty2 = st.selectbox("Ειδικότητα για εμφάνιση εφημεριών", specialties, key="spec2")
+            if st.button("Εμφάνιση Εφημεριών"):
+                result = get_shifts_by_specialty(df, selected_specialty2)
+                st.success(f"Βρέθηκαν {len(result)} βάρδιες για την ειδικότητα {selected_specialty2}.")
+                st.dataframe(result, use_container_width=True)
+
+        with tab3:
+            if st.button("Ποιοι είναι τώρα σε βάρδια;"):
+                result = get_doctors_now(df)
+                st.success(f"Αυτή τη στιγμή είναι σε βάρδια {len(result)} ιατροί.")
+                st.dataframe(result, use_container_width=True)
 
     except Exception as e:
         st.error(f"Σφάλμα κατά την επεξεργασία του αρχείου: {e}")
