@@ -32,11 +32,19 @@ def get_shifts_by_specialty(df, specialty):
 
 def get_doctors_now(df):
     now = datetime.now()
-    df["Ημ/νία Έναρξης"] = pd.to_datetime(df["Ημ/νία Έναρξης"])
-    df["Ημερομηνία Λήξης"] = pd.to_datetime(df["Ημερομηνία Λήξης"])
+
+    df = df.copy()
+    df = df.dropna(subset=["Ημ/νία Έναρξης", "Ημερομηνία Λήξης"])
+
+    df["Ημ/νία Έναρξης"] = pd.to_datetime(df["Ημ/νία Έναρξης"], errors="coerce")
+    df["Ημερομηνία Λήξης"] = pd.to_datetime(df["Ημερομηνία Λήξης"], errors="coerce")
+
+    df = df.dropna(subset=["Ημ/νία Έναρξης", "Ημερομηνία Λήξης"])
 
     current = df[(df["Ημ/νία Έναρξης"] <= now) & (df["Ημερομηνία Λήξης"] >= now)]
+
     return current[["Όνομα πόρου", "Ειδικότητα", "Ημ/νία Έναρξης", "Ημερομηνία Λήξης"]].sort_values(by=["Ειδικότητα", "Ημ/νία Έναρξης"])
+
 
 if uploaded_file:
     try:
