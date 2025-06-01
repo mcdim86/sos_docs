@@ -33,7 +33,8 @@ def get_shifts_by_specialty(df, specialty):
 
 def get_doctors_now(df):
     athens_tz = pytz.timezone("Europe/Athens")
-    now = datetime.now(athens_tz)
+    now = datetime.now(pytz.timezone("Europe/Athens")).replace(tzinfo=None)
+
 
     df = df.copy()
     df = df.dropna(subset=["Ημ/νία Έναρξης", "Ημερομηνία Λήξης"])
