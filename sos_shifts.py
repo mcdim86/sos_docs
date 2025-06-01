@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 from datetime import datetime, time
+import pytz
 
 st.set_page_config(page_title="Διαθέσιμοι Ιατροί", layout="wide")
 st.title("Έλεγχος Διαθεσιμότητας Ιατρών")
@@ -31,7 +32,8 @@ def get_shifts_by_specialty(df, specialty):
     return df[["Όνομα πόρου", "Ειδικότητα", "Ημ/νία Έναρξης", "Ημερομηνία Λήξης"]].sort_values(by=["Ημ/νία Έναρξης"])
 
 def get_doctors_now(df):
-    now = datetime.now()
+    athens_tz = pytz.timezone("Europe/Athens")
+    now = datetime.now(athens_tz)
 
     df = df.copy()
     df = df.dropna(subset=["Ημ/νία Έναρξης", "Ημερομηνία Λήξης"])
@@ -42,11 +44,10 @@ def get_doctors_now(df):
     df = df.dropna(subset=["Ημ/νία Έναρξης", "Ημερομηνία Λήξης"])
 
     current = df[(df["Ημ/νία Έναρξης"] <= now) & (df["Ημερομηνία Λήξης"] >= now)]
-    st.write("🕒 Τώρα:", now)
-    st.write("📋 Δείγμα δεδομένων:")
-    st.dataframe(df[["Όνομα πόρου", "Ημ/νία Έναρξης", "Ημερομηνία Λήξης"]].head(10))
 
+    st.write("🕒 Τοπική ώρα (Athens):", now)
     return current[["Όνομα πόρου", "Ειδικότητα", "Ημ/νία Έναρξης", "Ημερομηνία Λήξης"]].sort_values(by=["Ειδικότητα", "Ημ/νία Έναρξης"])
+
  
 if uploaded_file:
     try:
