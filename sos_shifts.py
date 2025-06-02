@@ -9,9 +9,10 @@ st.title("Έλεγχος Διαθεσιμότητας Ιατρών")
 uploaded_file = st.file_uploader("Ανέβασε αρχείο Excel", type=["xlsx"])
 
 def style_doctor_name(row):
+    name = row["Όνομα πόρου"]
     if pd.notna(row.get("Οδηγός")) and str(row.get("Οδηγός")).strip():
-        return f"<span style='color:green; font-weight:bold'>{row['Όνομα πόρου']}</span>"
-    return row['Όνομα πόρου']
+        return f"{name} *"
+    return name
 
 def filter_doctors(df, date, start_time, end_time, specialty=None):
     df = df.copy()
@@ -80,7 +81,7 @@ if uploaded_file:
             if st.button("Εμφάνιση Διαθέσιμων Ιατρών"):
                 result = filter_doctors(df, selected_date, start_hour, end_hour, selected_specialty)
                 st.success(f"Βρέθηκαν {len(result)} διαθέσιμοι ιατροί.")
-                st.write(result.to_html(escape=False, index=False), unsafe_allow_html=True)
+                st.dataframe(result, use_container_width=True)
 
         with tab2:
             specialties = sorted(df["Ειδικότητα"].dropna().unique())
@@ -88,13 +89,13 @@ if uploaded_file:
             if st.button("Εμφάνιση Εφημεριών"):
                 result = get_shifts_by_specialty(df, selected_specialty2)
                 st.success(f"Βρέθηκαν {len(result)} βάρδιες για την ειδικότητα {selected_specialty2}.")
-                st.write(result.to_html(escape=False, index=False), unsafe_allow_html=True)
+                st.dataframe(result, use_container_width=True)
 
         with tab3:
             if st.button("Ποιοι είναι τώρα σε βάρδια;"):
                 result = get_doctors_now(df)
                 st.success(f"Αυτή τη στιγμή είναι σε βάρδια {len(result)} ιατροί.")
-                st.write(result.to_html(escape=False, index=False), unsafe_allow_html=True)
+                st.dataframe(result, use_container_width=True)
 
     except Exception as e:
         st.error(f"Σφάλμα κατά την επεξεργασία του αρχείου: {e}")
