@@ -1,0 +1,11 @@
+body { font-family: Arial, sans-serif; padding: 18px; line-height:1.4; }
+input, button { margin: 6px 6px 6px 0; }
+table { border-collapse: collapse; width: 100%; margin-top: 12px; font-size:14px; }
+th, td { border: 1px solid #ddd; padding: 6px; text-align: left; vertical-align: middle; }
+th { background: #f5f5f5; }
+.red { color: red; font-weight: 700; }
+.done { background-color: #dff0d8 !important; }     /* πράσινο */
+.check { background-color: #fff3cd !important; }    /* πορτοκαλί/κίτρινο */
+button.action { padding:4px 8px; margin-right:6px; cursor:pointer; }
+.small { font-size:12px; color:#666; }
+#log { white-space:pre-wrap; font-family:monospace; font-size:12px; margin-top:8px; color:#333; }
