@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Excel Checker</title>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; }
+    table { border-collapse: collapse; width: 100%; margin-top: 20px; }
+    th, td { border: 1px solid #ddd; padding: 8px; text-align: center; }
+    th { background: #f4f4f4; }
+    .error { color: red; font-weight: bold; }
+    .done { background-color: #c8f7c5; }
+    .check { background-color: #ffe0b2; }
+    button { margin: 2px; padding: 5px 10px; cursor: pointer; }
+  </style>
+</head>
+<body>
+  <h2>Excel Checker</h2>
+  <input type="file" id="fileInput" />
+
+  <div id="output"></div>
+
+  <script>
+    document.getElementById('fileInput').addEventListener('change', handleFile, false);
+
+    function handleFile(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const data = new Uint8Array(e.target.result);
+        const workbook = XLSX.read(data, { type: 'array' });
+        const sheetName = workbook.SheetNames[0];
+        const ws = workbook.Sheets[sheetName];
+
+        // Αγνοούμε τελείως την πρώτη γραμμή, παίρνουμε τη δεύτερη ως header
+        const json = XLSX.utils.sheet_to_json(ws, { header: 1, range: 2, defval: ""});
+
+        const headers = json[0];     // δεύτερη γραμμή (headers)
+        const rows = json.slice(1);  // δεδομένα
+
+        // Trim + sort βάση στήλης C (index 2)
+        rows.forEach(r => { if (r[2]) r[2] = r[2].toString().trim(); });
+        rows.sort((a, b) => (a[2] || "").localeCompare(b[2] || ""));
+
+        renderTable(headers, rows);
+      };
+      reader.readAsArrayBuffer(file);
+    }
+
+    function renderTable(headers, rows) {
+      let html = "<table><thead><tr>";
+      headers.forEach(h => { html += `<th>${h}</th>`; });
+      html += "<th>Actions</th></tr></thead><tbody>";
+
+      rows.forEach((row, idx) => {
+        let sum = (Number(row[4]) || 0) + (Number(row[5]) || 0) + (Number(row[7]) || 0);
+        let jVal = Number(row[9]) || 0;
+        let jCell = (sum === jVal) ? jVal : `<span class="error">${jVal}</span>`;
+
+        html += `<tr id="row-${idx}">`;
+        row.forEach((cell, i) => {
+          if (i === 9) {
+            html += `<td>${jCell}</td>`;
+          } else {
+            html += `<td>${cell !== undefined ? cell : ""}</td>`;
+          }
+        });
+        html += `<td>
+                  <button onclick="markDone(${idx})">Done</button>
+                  <button onclick="markCheck(${idx})">Check</button>
+                 </td>`;
+        html += "</tr>";
+      });
+
+      html += "</tbody></table>";
+      document.getElementById("output").innerHTML = html;
+    }
+
+    function markDone(idx) {
+      const row = document.getElementById(`row-${idx}`);
+      row.classList.remove("check");
+      row.classList.add("done");
+    }
+
+    function markCheck(idx) {
+      const row = document.getElementById(`row-${idx}`);
+      row.classList.remove("done");
+      row.classList.add("check");
+    }
+  </script>
+</body>
+</html>
